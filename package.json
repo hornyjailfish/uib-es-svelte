@@ -1,0 +1,26 @@
+{
+  "name": "svelte-typescript-esbuild-tailwind-template",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"node esbuild.mjs\" \"npx tailwindcss -i ./src/tailwind.css -o ./public/build/bundle.css --watch\"",
+    "live": "node esbuild.mjs",
+    "lint": "svelte-check --tsconfig ./tsconfig.json && prettier --plugin-search-dir=. --write .",
+    "build": "node esbuild prod && npx tailwindcss -i ./src/tailwind.css -o ./public/build/bundle.css && csso ./public/build/bundle.css --output ./public/build/bundle.css"
+  },
+  "devDependencies": {
+    "@jgoz/esbuild-plugin-livereload": "latest",
+    "@tsconfig/svelte": "latest",
+    "concurrently": "latest",
+    "csso-cli": "latest",
+    "esbuild": "latest",
+    "esbuild-svelte": "latest",
+    "prettier": "latest",
+    "prettier-plugin-svelte": "latest",
+    "svelte": "latest",
+    "svelte-check": "latest",
+    "svelte-preprocess": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

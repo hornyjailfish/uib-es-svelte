@@ -1,48 +1,47 @@
-import * as esbuild from 'esbuild'
-import sveltePreprocess from 'svelte-preprocess'
-import sveltePlugin from 'esbuild-svelte' // esbuild plugin svelte
-import { livereloadPlugin } from '@jgoz/esbuild-plugin-livereload'
+import { BROWSER, DEV, NODE } from 'esm-env';
+import * as esbuild from "esbuild";
+import esbuildSvelte from "esbuild-svelte";
+import { livereloadPlugin } from "@jgoz/esbuild-plugin-livereload";
+import { tailwindPlugin } from 'esbuild-plugin-tailwindcss';
 
-import { EventEmitter } from 'events'
-let production = process.env.NODE_ENV === 'production'
+import { default as svelteConfig } from './svelte.config.js';
 
-console.log(`build ${production? 'production' : 'development'}`)
-
-const emitter = new EventEmitter()
-const onRebuildPlug = {
-  name: 'on-end',
-  setup(build) {
-    build.onEnd((result) => {
-      if (result.error)
-        console.log(`build ended with ${result.errors.length} errors`);
-      else {
-        emitter.emit('refresh', '123123')
-        console.log('esbuild: Watch build succeeded')
-      }
-    });
-  },
-};
+console.log(`build ${DEV ? "development" : "production"}`);
 
 let ctx = await esbuild.context({
-  entryPoints: ['./src/main.ts'],
+  platform: "browser",
+  entryPoints: ["./src/main.ts"],
   bundle: true,
-  format: 'iife',
-  target: 'es6',
-  minify: production,
-  sourcemap: false,
-  outfile: './public/build/bundle.js', // and bundle.css
-  pure: production ? ['console.log', 'console.time', 'console.timeEnd'] : [],
-  legalComments: 'none',
+  write: true,
+  format: "esm",
+  target: "esnext",
+  metafile: true,
+  minify: !DEV,
+  sourcemap: "inline",
+  splitting: true,
+  mainFields: ["svelte", "browser", "module", "main"],
+  conditions: ["browser", "svelte"],
+  outdir: "./public/build/", // and bundle.css
+  // outfile: "./public/build/bundle.js", // and bundle.css
+  pure: !DEV ? ["console.log", "console.time", "console.timeEnd"] : [],
+  legalComments: "none",
   plugins: [
-    sveltePlugin({ preprocess: sveltePreprocess() }),
-    onRebuildPlug,
-    livereloadPlugin({ urlHostname: 'localhost', port: 8000 }),
-  ]})
+    esbuildSvelte(svelteConfig),
+    tailwindPlugin({ configPath: "./tailwind.config.js" }),
+    livereloadPlugin({ port: 42069 }),
+  ],
+}).catch((error, location) => {
+  console.warn(`Errors: `, error, location);
+  process.exit(1);
+});
 
-await ctx.watch()
-console.log('watching...')
-
-let { host, port } = await ctx.serve({
-  servedir: 'public',
-})
-console.log(`Serving on http://${host}:${port}`)
+if (DEV) {
+  const { host, port } = await ctx.serve({
+    port: 8000,
+    servedir: "public",
+  });
+  console.log(`Serving on http://${host}:${port}`);
+  await ctx.watch();
+  console.log("watching...");
+}
+else { console.log("building..."); }

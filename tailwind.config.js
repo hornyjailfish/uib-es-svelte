@@ -1,10 +1,11 @@
-module.exports = {
+export default  {
   content: ['./public/**/*.html', './src/**/*.svelte'],
   theme: {
-    extend: {}
+    extend: {
+    }
   },
   variants: {
     extend: {}
   },
   plugins: []
-}
+};
